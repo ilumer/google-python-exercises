@@ -82,15 +82,17 @@ def main():
   if args[0] == '--summaryfile':
     summary = True
     del args[0]
-
   for arg in args:
     #写入文本中
-    with open(arg+'.summary','w') as f:
-      f.write('\n'.join(extract_names(arg)))
-    
+    if summary:
+      with open(arg+'.summary','w') as f:
+        f.write('\n'.join(extract_names(arg)))
+    else:
+      for  x in extract_names(arg):
+        print x
   # +++your code here+++
   # For each filename, get the names, then either print the text output
   # or write it to a summary file
   
-if __name__ == '__main__':
+if __name__ == '__main__':  
   main()
