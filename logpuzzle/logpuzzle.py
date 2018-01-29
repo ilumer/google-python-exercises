@@ -17,15 +17,27 @@ Given an apache logfile, find the puzzle urls and download the images.
 Here's what a puzzle url looks like:
 10.254.254.28 - - [06/Aug/2007:00:13:48 -0700] "GET /~foo/puzzle-bar-aaab.jpg HTTP/1.0" 302 528 "-" "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6"
 """
-
-
 def read_urls(filename):
   """Returns a list of the puzzle urls from the given log file,
   extracting the hostname from the filename itself.
   Screens out duplicate urls and returns the urls sorted into
   increasing order."""
+  result = []
+  with open(filename) as f:
+    for line in f.readlines():
+      exsit = re.search(r'GET ([\w/-]+?.jpg)',line)
+      if exsit and exsit.group(1) not in result and 'puzzle' in exsit.group(1):
+        result.append(exsit.group(1))
+  result = ["http://code.google.com"+x for x in result]
+  return result
   # +++your code here+++
-  
+
+def sort_by_second_word(url):
+  match = re.search(r'(\w+)-(\w+?)-(\w+).jpg',url)
+  if match:
+    return match.group(3)
+  else:
+    return url
 
 def download_images(img_urls, dest_dir):
   """Given the urls already in the correct order, downloads
@@ -36,7 +48,19 @@ def download_images(img_urls, dest_dir):
   Creates the directory if necessary.
   """
   # +++your code here+++
-  
+  if not os.path.exists(dest_dir):
+    os.mkdir(dest_dir)
+  n = 0;
+  for img_url in img_urls:
+    print 'Retrieving...',img_url
+    urllib.urlretrieve(img_url,os.path.join(dest_dir,'img'+str(n)))
+    n+=1
+  with open(os.path.join(dest_dir,'index.html'),'w') as f:
+    html_content = '<html>\n<body>'
+    for i in range(0,n):
+      html_content = html_content + '<img src=img'+str(i)+'>'
+    html_content = html_content +'\n</body>\n</html>'
+    f.write(html_content)
 
 def main():
   args = sys.argv[1:]
@@ -50,7 +74,7 @@ def main():
     todir = args[1]
     del args[0:2]
 
-  img_urls = read_urls(args[0])
+  img_urls = sorted(read_urls(args[0]),key=sort_by_second_word)
 
   if todir:
     download_images(img_urls, todir)
